@@ -37,9 +37,9 @@ $remoteFile = sprintf(
 $scriptString = <<<script
 if (typeof Sentry !== 'undefined') {
     Sentry.init({
-        dsn: '{$block->escapeUrl(trim($block->getDSN()))}',
-        release: '{$block->escapeHtml(trim($block->getVersion()))}',
-        environment: '{$block->escapeHtml(trim($block->getEnvironment()))}',
+        dsn: '{$escaper->escapeUrl(trim($block->getDSN()))}',
+        release: '{$escaper->escapeHtml(trim($block->getVersion()))}',
+        environment: '{$escaper->escapeHtml(trim($block->getEnvironment()))}',
         integrations: [
 script;
 if ($block->isTracingEnabled()) {
@@ -49,19 +49,19 @@ if ($block->isTracingEnabled()) {
 }
 if ($block->useSessionReplay()) {
     $scriptString .= "Sentry.replayIntegration({
-                blockAllMedia: {$block->escapeHtml($block->getReplayBlockMedia() ? 'true' : 'false')},
-                maskAllText: {$block->escapeHtml($block->getReplayMaskText() ? 'true' : 'false')},
+                blockAllMedia: {$escaper->escapeHtml($block->getReplayBlockMedia() ? 'true' : 'false')},
+                maskAllText: {$escaper->escapeHtml($block->getReplayMaskText() ? 'true' : 'false')},
             }),";
 }
 $scriptString .= '],';
 if ($block->isTracingEnabled()) {
-    $scriptString .= "tracesSampleRate: {$block->escapeHtml($block->getTracingSampleRate())},";
+    $scriptString .= "tracesSampleRate: {$escaper->escapeHtml($block->getTracingSampleRate())},";
 }
 
 if ($block->useSessionReplay()) {
     $scriptString .=
-        "replaysSessionSampleRate: {$block->escapeHtml($block->getReplaySessionSampleRate())},
-        replaysOnErrorSampleRate: {$block->escapeHtml($block->getReplayErrorSampleRate())},";
+        "replaysSessionSampleRate: {$escaper->escapeHtml($block->getReplaySessionSampleRate())},
+        replaysOnErrorSampleRate: {$escaper->escapeHtml($block->getReplayErrorSampleRate())},";
 }
 
 $scriptString .= "ignoreErrors: {$block->getIgnoreJsErrors()},";
@@ -80,14 +80,14 @@ if ($block->stripStaticContentVersion() || $block->stripStoreCode()) {
     }
     if ($block->stripStoreCode()) {
         $scripetString .= "value.stacktrace.frames.map(function (frame) {
-                    frame.filename = frame.filename.replace('/{$block->escapeHtml($block->getStoreCode())}/', '/');
+                    frame.filename = frame.filename.replace('/{$escaper->escapeHtml($block->getStoreCode())}/', '/');
                     return frame;
                     });";
     }
 
     if ($block->stripStoreCode()) {
         $scriptString .= "value.stacktrace.frames.map(function (frame) {
-            frame.filename = frame.filename.replace('/{$block->escapeHtml($block->getStoreCode())}/', '/');
+            frame.filename = frame.filename.replace('/{$escaper->escapeHtml($block->getStoreCode())}/', '/');
             return frame;
         });";
     }
