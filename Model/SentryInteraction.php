@@ -33,11 +33,9 @@ class SentryInteraction
      * SentryInteraction constructor.
      *
      * @param State $appState
-     * @param Data $sentryHelper
      */
     public function __construct(
-        private State $appState,
-        private Data $sentryHelper
+        private State $appState
     ) {
     }
 
