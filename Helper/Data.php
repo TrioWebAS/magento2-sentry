@@ -90,11 +90,6 @@ class Data extends AbstractHelper
         return $this->collectModuleConfig()['dsn'];
     }
 
-    public function getPhpProfileSampleRate(): float
-    {
-        return (float) ($this->collectModuleConfig()['profiles_sample_rate'] ?? 0);
-    }
-
     /**
      * Whether tracing is enabled.
      */
@@ -108,7 +103,7 @@ class Data extends AbstractHelper
      */
     public function getTracingSampleRate(): float
     {
-        return (float) $this->collectModuleConfig()['tracing_sample_rate'] ?? 0.2;
+        return (float) ($this->collectModuleConfig()['tracing_sample_rate'] ?? 0.2);
     }
 
     /**
@@ -139,7 +134,8 @@ class Data extends AbstractHelper
                 : $this->serializer->unserialize($config['ignore_js_errors']);
         } catch (InvalidArgumentException $e) {
             throw new RuntimeException(
-                'Sentry configuration error: `ignore_js_errors` has to be an array or `null`. Given type: '.gettype($list) // phpcs:ignore
+                __('Sentry configuration error: `ignore_js_errors` has to be an array or `null`. Given type: %s', gettype($list)), // phpcs:ignore
+                $e
             );
         }
 
@@ -197,7 +193,8 @@ class Data extends AbstractHelper
     }
 
     /**
-     * Get current store id.
+     * Get the store id of the current store.
+     *
      * @return int
      */
     public function getStoreId(): int
@@ -211,27 +208,28 @@ class Data extends AbstractHelper
      */
     public function collectModuleConfig(): array
     {
-        if (isset($this->config[$this->getStoreId()]['enabled'])) {
-            return $this->config[$this->getStoreId()];
+        $storeId = $this->getStoreId();
+        if (isset($this->config[$storeId]['enabled'])) {
+            return $this->config[$storeId];
         }
 
         try {
-            $this->config[$this->getStoreId()]['enabled'] = $this->scopeConfig->getValue('sentry/environment/enabled', ScopeInterface::SCOPE_STORE)
+            $this->config[$storeId]['enabled'] = $this->scopeConfig->getValue('sentry/environment/enabled', ScopeInterface::SCOPE_STORE)
                 ?? $this->deploymentConfig->get('sentry') !== null;
         } catch (TableNotFoundException|FileSystemException|RuntimeException $e) {
-            $this->config[$this->getStoreId()]['enabled'] = null;
+            $this->config[$storeId]['enabled'] = null;
         }
 
         foreach ($this->configKeys as $value) {
             try {
-                $this->config[$this->getStoreId()][$value] = $this->scopeConfig->getValue('sentry/environment/'.$value, ScopeInterface::SCOPE_STORE)
+                $this->config[$storeId][$value] = $this->scopeConfig->getValue('sentry/environment/'.$value, ScopeInterface::SCOPE_STORE)
                     ?? $this->deploymentConfig->get('sentry/'.$value);
             } catch (TableNotFoundException|FileSystemException|RuntimeException $e) {
-                $this->config[$this->getStoreId()][$value] = null;
+                $this->config[$storeId][$value] = null;
             }
         }
 
-        return $this->config[$this->getStoreId()];
+        return $this->config[$storeId];
     }
 
     /**
@@ -307,7 +305,7 @@ class Data extends AbstractHelper
     }
 
     /**
-     *  Get the current magento version.
+     * Get the current magento version.
      *
      * @return string
      */
@@ -332,16 +330,6 @@ class Data extends AbstractHelper
     public function isPhpTrackingEnabled(): bool
     {
         return $this->scopeConfig->isSetFlag(static::XML_PATH_SRS.'enable_php_tracking', ScopeInterface::SCOPE_STORE);
-    }
-
-    public function isPerformanceTrackingEnabled(): bool
-    {
-        return $this->isTracingEnabled() && $this->collectModuleConfig()['performance_tracking_enabled'] ?? false;
-    }
-
-    public function getPerformanceTrackingExcludedAreas(): array
-    {
-        return $this->collectModuleConfig()['performance_tracking_excluded_areas'] ?? ['adminhtml', 'crontab'];
     }
 
     /**

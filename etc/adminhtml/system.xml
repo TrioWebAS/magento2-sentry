@@ -15,12 +15,8 @@
                     <label>Deployment config info</label>
                     <frontend_model>JustBetter\Sentry\Block\Adminhtml\System\Config\DeploymentConfigInfo</frontend_model>
                 </field>
-                <field id="enable_php_tracking" translate="label" type="select" sortOrder="20" showInDefault="1" showInStore="1" showInWebsite="1" canRestore="1">
+                <field id="enable_php_tracking" translate="label" type="select" sortOrder="20" showInDefault="1" showInStore="0" showInWebsite="0" canRestore="1">
                     <label>Enable PHP Tracking</label>
-                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                </field>
-                <field id="enable_performance_tracking" translate="label" type="select" sortOrder="20" showInDefault="1" showInStore="1" showInWebsite="1" canRestore="1">
-                    <label>Enable Performance Tracking</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
                 <field id="enable_script_tag" translate="label" type="select" sortOrder="20" showInDefault="1" showInStore="1" showInWebsite="1" canRestore="1">
@@ -133,14 +129,14 @@
                     </depends>
                 </field>
             </group>
-            <group id="issue_grouping" translate="label" type="text" sortOrder="30" showInDefault="1" showInStore="1" showInWebsite="1" canRestore="1">
+            <group id="issue_grouping" translate="label" type="text" sortOrder="30" showInDefault="1" showInStore="0" showInWebsite="0" canRestore="1">
                 <label>Sentry issue grouping</label>
                 <comment><![CDATA[Sentry does its best to group related issues, but due to some parts in most Magento URL's, Sentry inadvertently does not group these issues although they might be related. Stripping out these values from the URL helps with this.]]></comment>
-                <field id="strip_static_content_version"  translate="label" type="select" sortOrder="10" showInDefault="1" showInStore="1" showInWebsite="1" canRestore="1">
+                <field id="strip_static_content_version"  translate="label" type="select" sortOrder="10" showInDefault="1" showInStore="0" showInWebsite="0" canRestore="1">
                     <label>Strip static version from URL</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
-                <field id="strip_store_code" translate="label" type="select" sortOrder="20" showInDefault="1" showInStore="1" showInWebsite="1" canRestore="1">
+                <field id="strip_store_code" translate="label" type="select" sortOrder="20" showInDefault="1" showInStore="0" showInWebsite="0" canRestore="1">
                     <label>Strip store code from URL</label>
                     <comment><![CDATA[Caution: this will replace all occurrences of your storecode in the URL, which might cause issues when the store code is too generic.]]></comment>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
