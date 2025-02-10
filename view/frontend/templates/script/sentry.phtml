@@ -1,10 +1,7 @@
 <?php
-/**
- * @var \JustBetter\Sentry\Block\SentryScript $block
- * @var \Magento\Framework\Escaper $escaper
- * @var \Magento\Framework\View\Helper\SecureHtmlRenderer $secureRenderer
- */
-
+// phpcs:disable Magento2.Templates.ThisInTemplate.FoundThis
+/** @var \Magento\Framework\View\Helper\SecureHtmlRenderer $secureRenderer */
+/** @var \JustBetter\Sentry\Block\SentryScript $block */
 if (!$block->canUseScriptTag($block->getNameInLayout())) {
     return;
 }
@@ -28,150 +25,30 @@ $remoteFile = sprintf(
 );
 ?>
 
-<script src="<?= /** @noEscape */$remoteFile ?>" crossorigin="anonymous"></script>
-<?php
-// The following script can be omitted in which case the
-// `Chessio_Matomo/js/tracker' component will inject the tracker script instead.
-// However that might cause the tracker script to miss the `DOMContentLoaded'
-// event which breaks the link tracking feature.
-$scriptString = <<<script
-if (typeof Sentry !== 'undefined') {
-    Sentry.init({
-        dsn: '{$escaper->escapeUrl(trim($block->getDSN()))}',
-        release: '{$escaper->escapeHtml(trim($block->getVersion()))}',
-        environment: '{$escaper->escapeHtml(trim($block->getEnvironment()))}',
-        integrations: [
-script;
-if ($block->isTracingEnabled()) {
-    $scriptString .= "Sentry.browserTracingIntegration({
-                enableInp: true,
-            }),";
-}
-if ($block->useSessionReplay()) {
-    $scriptString .= "Sentry.replayIntegration({
-                blockAllMedia: {$escaper->escapeHtml($block->getReplayBlockMedia() ? 'true' : 'false')},
-                maskAllText: {$escaper->escapeHtml($block->getReplayMaskText() ? 'true' : 'false')},
-            }),";
-}
-$scriptString .= '],';
-if ($block->isTracingEnabled()) {
-    $scriptString .= "tracesSampleRate: {$escaper->escapeHtml($block->getTracingSampleRate())},";
-}
+<?= /* @noEscape */ $secureRenderer->renderTag('script', ['src' => $remoteFile, 'crossorigin' => 'anonymous']) ?>
+<?= /* @noEscape */ $secureRenderer->renderTag('script', [], $block->getLayout()->createBlock(\JustBetter\Sentry\Block\SentryScript::class)
+    ->setTemplate('JustBetter_Sentry::script/sentry_init.phtml')
+    ->toHtml(), false); ?>
 
-if ($block->useSessionReplay()) {
-    $scriptString .=
-        "replaysSessionSampleRate: {$escaper->escapeHtml($block->getReplaySessionSampleRate())},
-        replaysOnErrorSampleRate: {$escaper->escapeHtml($block->getReplayErrorSampleRate())},";
-}
-
-$scriptString .= "ignoreErrors: {$block->getIgnoreJsErrors()},";
-
-if ($block->stripStaticContentVersion() || $block->stripStoreCode()) {
-    $scriptString .= "beforeSend: function(event) {
-            event.exception.values.map(function (value) {
-                if (value.stacktrace === undefined || ! value.stacktrace) {
-                    return value;
-                }";
-    if ($block->stripStaticContentVersion()) {
-        $scriptString .= "value.stacktrace.frames.map(function (frame) {
-            frame.filename = frame.filename.replace(/version[0-9]{10}\//, '');
-            return frame;
-        });";
-    }
-    if ($block->stripStoreCode()) {
-        $scripetString .= "value.stacktrace.frames.map(function (frame) {
-                    frame.filename = frame.filename.replace('/{$escaper->escapeHtml($block->getStoreCode())}/', '/');
-                    return frame;
-                    });";
-    }
-
-    if ($block->stripStoreCode()) {
-        $scriptString .= "value.stacktrace.frames.map(function (frame) {
-            frame.filename = frame.filename.replace('/{$escaper->escapeHtml($block->getStoreCode())}/', '/');
-            return frame;
-        });";
-    }
-
-    $scriptString .= "return value;
-
-
-            });
-            return event;
-        }";
-}
-
-$scriptString .= "});
-}";
-
-echo $secureRenderer->renderTag('script', [], $scriptString, false);
-?>
 <?php if ($block->useLogRocket()): ?>
-    <script src="https://cdn.lr-ingest.io/LogRocket.min.js" crossorigin="anonymous"></script>
-<?php
-$scriptString = <<<script
-    window.LogRocket && window.LogRocket.init('{$block->getLogrocketKey()}');
-    LogRocket.getSessionURL(sessionURL => {
-        Sentry.configureScope(scope => {
-            scope.setExtra("sessionURL", sessionURL);
-        });
-    });
-script;
-
-if ($block->useLogRocketIdentify()) {
-    $scriptString = <<<script
-        define('customerData',
-            ['jquery', 'Magento_Customer/js/customer-data'],
-            function ($, customerData) {
-                'use strict';
-
-                var getCustomerInfo = function () {
-                    var customer = customerData.get('customer');
-
-                    return customer();
-                };
-
-                var isLoggedIn = function (customerInfo) {
-                    return customerInfo && customerInfo.firstname;
-                };
-
-                return function () {
-                    var deferred = $.Deferred();
-                    var customerInfo = getCustomerInfo();
-
-                    if (customerInfo && customerInfo.data_id) {
-                        deferred.resolve(isLoggedIn(customerInfo), customerInfo);
-                    } else {
-                        customerData.reload(['customer'], false)
-                            .done(function () {
-                                customerInfo = getCustomerInfo()
-                                deferred.resolve(isLoggedIn(customerInfo), customerInfo);
-                            })
-                            .fail(function () {
-                                deferred.reject();
-                            });
-                    }
-
-                    return deferred;
-                };
-
-            }
-        );
-
-        require(["customerData"], function (customerData) {
-
-            customerData().then(function (loggedIn, data) {
-                if (!loggedIn) {
-                    return;
-                }
-
-                LogRocket.identify(data.websiteId, {
-                    name: data.fullname,
-                    email: data.email
-                });
-
+    <?= /* @noEscape */ $secureRenderer->renderTag('script', ['src' => 'https://cdn.lr-ingest.io/LogRocket.min.js', 'crossorigin' => 'anonymous']) ?>
+    <?= /* @noEscape */ $secureRenderer->renderTag(
+        'script',
+        [],
+        "window.LogRocket && window.LogRocket.init('" . /* @noEscape */ trim($block->getLogrocketKey()) . "');",
+        false
+    ); ?>
+    <?= /* @noEscape */ $secureRenderer->renderTag(
+        'script',
+        [],
+        'LogRocket.getSessionURL(sessionURL => {
+            Sentry.configureScope(scope => {
+                scope.setExtra("sessionURL", sessionURL);
             });
-        });
-script;
-}
-    echo $secureRenderer->renderTag('script', [], $scriptString, false);
-endif;
+        });',
+        false
+    ); ?>
+    <?= /* @noEscape */ $secureRenderer->renderTag('script', [], $block->getLayout()->createBlock(\JustBetter\Sentry\Block\SentryScript::class)
+        ->setTemplate('JustBetter_Sentry::script/logrocket_init.phtml')
+        ->toHtml(), false); ?>
+<?php endif; ?>
