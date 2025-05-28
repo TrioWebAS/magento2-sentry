@@ -54,6 +54,7 @@ class Data extends AbstractHelper
         'profiles_sample_rate',
         'ignore_js_errors',
         'disable_default_integrations',
+        'clean_stacktrace',
     ];
 
     /**
@@ -320,6 +321,16 @@ class Data extends AbstractHelper
     public function getStore()
     {
         return $this->storeManager->getStore();
+    }
+
+    /**
+     * Should the stacktrace get cleaned up?
+     *
+     * @return bool
+     */
+    public function getCleanStacktrace(): bool
+    {
+        return $this->collectModuleConfig()['clean_stacktrace'] ?? true;
     }
 
     /**
