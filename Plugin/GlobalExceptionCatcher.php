@@ -79,13 +79,8 @@ class GlobalExceptionCatcher
             static fn (IntegrationInterface $integration) => !in_array(get_class($integration), $disabledDefaultIntegrations)
         ));
 
-        if ($this->sentryHelper->isPerformanceTrackingEnabled()) {
-            $config->setTracesSampleRate($this->sentryHelper->getTracingSampleRate());
-        }
-
-        if ($rate = $this->sentryHelper->getPhpProfileSampleRate()) {
-            $config->setData('profiles_sample_rate', $rate);
-        }
+        $config->setIgnoreExceptions($this->sentryHelper->getIgnoreExceptions());
+        $config->setErrorTypes($this->sentryHelper->getErrorExceptionReporting());
 
         $this->eventManager->dispatch('sentry_before_init', [
             'config' => $config,
