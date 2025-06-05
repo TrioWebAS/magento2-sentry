@@ -6,10 +6,27 @@ use JustBetter\Sentry\Helper\Data;
 use JustBetter\Sentry\Model\SentryLog;
 use Magento\Framework\App\DeploymentConfig;
 use Magento\Framework\Logger\Monolog;
-use Monolog\DateTimeImmutable;
+use Monolog\Level;
+use Monolog\JsonSerializableDateTimeImmutable;
 
 class MonologPlugin extends Monolog
 {
+    /**
+     * Mapping between levels numbers defined in RFC 5424 and Monolog ones
+     *
+     * @phpstan-var array<int, Level> $rfc_5424_levels
+     */
+    private const RFC_5424_LEVELS = [
+        7 => Level::Debug,
+        6 => Level::Info,
+        5 => Level::Notice,
+        4 => Level::Warning,
+        3 => Level::Error,
+        2 => Level::Critical,
+        1 => Level::Alert,
+        0 => Level::Emergency,
+    ];
+
     /**
      * @psalm-param array<callable(array): array> $processors
      *
@@ -34,18 +51,18 @@ class MonologPlugin extends Monolog
     /**
      * Adds a log record to Sentry.
      *
-     * @param int               $level    The logging level
-     * @param string            $message  The log message
-     * @param array             $context  The log context
-     * @param DateTimeImmutable $datetime Datetime of log
+     * @param int                               $level    The logging level
+     * @param string                            $message  The log message
+     * @param array                             $context  The log context
+     * @param JsonSerializableDateTimeImmutable $datetime Datetime of log
      *
      * @return bool Whether the record has been processed
      */
     public function addRecord(
-        int $level,
+        int|Level $level,
         string $message,
         array $context = [],
-        DateTimeImmutable $datetime = null
+        JsonSerializableDateTimeImmutable|null $datetime = null
     ): bool {
         if ($this->deploymentConfig->isAvailable() && $this->sentryHelper->isActive()) {
             $this->sentryLog->send($message, $level, $context);
