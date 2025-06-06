@@ -18,13 +18,14 @@ use Throwable;
 class GlobalExceptionCatcher
 {
     /**
-     * ExceptionCatcher constructor.
+     * GlobalExceptionCatcher constructor.
      *
-     * @param SenteryHelper         $sentryHelper
+     * @param SentryHelper          $sentryHelper
      * @param ReleaseIdentifier     $releaseIdentifier
      * @param SentryInteraction     $sentryInteraction
      * @param EventManagerInterface $eventManager
      * @param DataObjectFactory     $dataObjectFactory
+     * @param SentryPerformance     $sentryPerformance
      */
     public function __construct(
         private SentryHelper $sentryHelper,
@@ -82,6 +83,14 @@ class GlobalExceptionCatcher
 
         $config->setErrorTypes($this->sentryHelper->getErrorTypes());
 
+        if ($this->sentryHelper->isPerformanceTrackingEnabled()) {
+            $config->setTracesSampleRate($this->sentryHelper->getTracingSampleRate());
+        }
+
+        if ($rate = $this->sentryHelper->getPhpProfileSampleRate()) {
+            $config->setData('profiles_sample_rate', $rate);
+        }
+
         $this->eventManager->dispatch('sentry_before_init', [
             'config' => $config,
         ]);
@@ -91,17 +100,10 @@ class GlobalExceptionCatcher
 
         try {
             return $response = $proceed();
-        } catch (\Throwable $ex) {
-            try {
-                if ($this->sentryHelper->shouldCaptureException($ex)) {
-                    $this->sentryInteraction->addUserContext();
-                    $this->sentryInteraction->captureException($ex);
-                }
-            } catch (\Throwable $bigProblem) {
-                // do nothing if sentry fails
-            }
+        } catch (Throwable $exception) {
+            $this->sentryInteraction->captureException($exception);
 
-            throw $ex;
+            throw $exception;
         } finally {
             $this->sentryPerformance->finishTransaction($response ?? 500);
         }

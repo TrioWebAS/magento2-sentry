@@ -64,18 +64,22 @@ class Data extends AbstractHelper
      * @var array
      */
     protected $configKeys = [
-        ...self::NATIVE_SENTRY_CONFIG_KEYS,
-        'logrocket_key'                => ['type' => 'array'],
-        'log_level'                    => ['type' => 'int'],
-        'errorexception_reporting'     => ['type' => 'int'], // Deprecated by error_types https://docs.sentry.io/platforms/php/configuration/options/#error_types
-        'mage_mode_development'        => ['type' => 'bool'],
-        'environment'                  => ['type' => 'string'],
-        'js_sdk_version'               => ['type' => 'string'],
-        'tracing_enabled'              => ['type' => 'bool'],
-        'tracing_sample_rate'          => ['type' => 'float'],
-        'ignore_js_errors'             => ['type' => 'array'],
-        'disable_default_integrations' => ['type' => 'array'],
-        'clean_stacktrace'             => ['type' => 'bool'],
+        'dsn',
+        'logrocket_key',
+        'log_level',
+        'errorexception_reporting',
+        'ignore_exceptions',
+        'mage_mode_development',
+        'environment',
+        'js_sdk_version',
+        'tracing_enabled',
+        'tracing_sample_rate',
+        'performance_tracking_enabled',
+        'performance_tracking_excluded_areas',
+        'profiles_sample_rate',
+        'ignore_js_errors',
+        'disable_default_integrations',
+        'clean_stacktrace',
     ];
 
     /**
@@ -110,6 +114,16 @@ class Data extends AbstractHelper
     public function getDSN()
     {
         return $this->collectModuleConfig()['dsn'];
+    }
+
+    /**
+     * Get sample rate for php profiling.
+     *
+     * @return float
+     */
+    public function getPhpProfileSampleRate(): float
+    {
+        return (float) ($this->collectModuleConfig()['profiles_sample_rate'] ?? 0);
     }
 
     /**
@@ -374,11 +388,31 @@ class Data extends AbstractHelper
     }
 
     /**
+     * Is php performance tracking enabled?
+     *
+     * @return bool
+     */
+    public function isPerformanceTrackingEnabled(): bool
+    {
+        return $this->isTracingEnabled() && ($this->collectModuleConfig()['performance_tracking_enabled'] ?? false);
+    }
+
+    /**
+     * Get excluded Magento areas which should be not profiled.
+     *
+     * @return string[]
+     */
+    public function getPerformanceTrackingExcludedAreas(): array
+    {
+        return $this->collectModuleConfig()['performance_tracking_excluded_areas'] ?? ['adminhtml', 'crontab'];
+    }
+
+    /**
      * Is the script tag enabled?
      *
      * @return bool
      */
-    public function useScriptTag(): bool
+    public function useScriptTag()
     {
         return $this->scopeConfig->isSetFlag(static::XML_PATH_SRS.'enable_script_tag', ScopeInterface::SCOPE_STORE);
     }
