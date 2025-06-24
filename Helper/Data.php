@@ -592,6 +592,10 @@ class Data extends AbstractHelper
             return false;
         }
 
+        if ($ex->getPrevious()) {
+            return $this->shouldCaptureException($ex->getPrevious());
+        }
+
         return true;
     }
 }
