@@ -4,6 +4,7 @@
         <sentry>
             <general>
                 <enable_php_tracking>1</enable_php_tracking>
+                <enable_performance_tracking>0</enable_performance_tracking>
                 <enable_script_tag>0</enable_script_tag>
                 <script_tag_placement>before.body.end</script_tag_placement>
                 <use_logrocket>0</use_logrocket>
@@ -18,7 +19,7 @@
                 <logrocket_key/>
                 <environment/>
                 <log_level/>
-                <errorexception_reporting/>
+                <error_types/>
                 <ignore_exceptions/>
                 <mage_mode_development/>
                 <js_sdk_version/>

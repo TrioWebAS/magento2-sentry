@@ -6,14 +6,18 @@ namespace JustBetter\Sentry\Model;
 
 // phpcs:disable Magento2.Functions.DiscouragedFunction
 
+use JustBetter\Sentry\Helper\Data;
 use Magento\Authorization\Model\UserContextInterface;
 use Magento\Backend\Model\Auth\Session as AdminSession;
 use Magento\Customer\Model\Session as CustomerSession;
 use Magento\Framework\App\Area;
 use Magento\Framework\App\State;
 use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\HTTP\PhpEnvironment\RemoteAddress;
+use Magento\Framework\ObjectManager\ConfigInterface;
 use ReflectionClass;
 use Sentry\State\Scope;
+use Throwable;
 
 use function Sentry\captureException;
 use function Sentry\configureScope;
@@ -22,14 +26,23 @@ use function Sentry\init;
 class SentryInteraction
 {
     /**
+     * @var ?UserContextInterface
+     */
+    private ?UserContextInterface $userContext = null;
+
+    /**
      * SentryInteraction constructor.
      *
-     * @param UserContextInterface $userContext
-     * @param State                $appState
+     * @param State           $appState
+     * @param ConfigInterface $omConfigInterface
+     * @param Data            $sentryHelper
+     * @param RemoteAddress   $remoteAddress
      */
     public function __construct(
-        private UserContextInterface $userContext,
-        private State $appState
+        private State $appState,
+        private ConfigInterface $omConfigInterface,
+        private Data $sentryHelper,
+        private RemoteAddress $remoteAddress
     ) {
     }
 
@@ -40,15 +53,60 @@ class SentryInteraction
      *
      * @return void
      */
-    public function initialize($config)
+    public function initialize($config): void
     {
         init($config);
     }
 
     /**
+     * Check if we might be able to get user context.
+     */
+    public function canGetUserContext(): bool
+    {
+        try {
+            // @phpcs:ignore Generic.PHP.NoSilencedErrors
+            return in_array(@$this->appState->getAreaCode(), [Area::AREA_ADMINHTML, Area::AREA_FRONTEND, Area::AREA_WEBAPI_REST, Area::AREA_WEBAPI_SOAP, Area::AREA_GRAPHQL]);
+        } catch (LocalizedException $ex) {
+            return false;
+        }
+    }
+
+    /**
+     * Get a class instance, but only if it is already available within the objectManager.
+     *
+     * @param string $class The classname of the type you want from the objectManager.
+     */
+    public function getObjectIfInitialized($class): ?object
+    {
+        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+        $reflectionClass = new ReflectionClass($objectManager);
+        $sharedInstances = $reflectionClass->getProperty('_sharedInstances');
+        $sharedInstances->setAccessible(true);
+        $class = $this->omConfigInterface->getPreference($class);
+
+        if (!array_key_exists(ltrim($class, '\\'), $sharedInstances->getValue($objectManager))) {
+            return null;
+        }
+
+        return $objectManager->get($class);
+    }
+
+    /**
+     * Attempt to get userContext from the objectManager, so we don't request it too early.
+     */
+    public function getUserContext(): ?UserContextInterface
+    {
+        if ($this->userContext) {
+            return $this->userContext;
+        }
+
+        return $this->userContext = $this->getObjectIfInitialized(UserContextInterface::class);
+    }
+
+    /**
      * Check if we might be able to get the user data.
      */
-    private function canGetUserData()
+    public function canGetUserData(): bool
     {
         try {
             // @phpcs:ignore Generic.PHP.NoSilencedErrors
@@ -61,23 +119,17 @@ class SentryInteraction
     /**
      * Attempt to get userdata from the current session.
      */
-    private function getSessionUserData()
+    private function getSessionUserData(): array
     {
         if (!$this->canGetUserData()) {
             return [];
         }
 
-        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
-        $reflectionClass = new ReflectionClass($objectManager);
-        $sharedInstances = $reflectionClass->getProperty('_sharedInstances');
-        $sharedInstances->setAccessible(true);
-
         if ($this->appState->getAreaCode() === Area::AREA_ADMINHTML) {
-            if (!array_key_exists(ltrim(AdminSession::class, '\\'), $sharedInstances->getValue($objectManager))) {
-                // Don't intitialise session if it has not already been started, this causes problems with dynamic resources.
+            $adminSession = $this->getObjectIfInitialized(AdminSession::class);
+            if ($adminSession === null) {
                 return [];
             }
-            $adminSession = $objectManager->get(AdminSession::class);
 
             if ($adminSession->isLoggedIn()) {
                 return [
@@ -89,10 +141,10 @@ class SentryInteraction
         }
 
         if ($this->appState->getAreaCode() === Area::AREA_FRONTEND) {
-            if (!array_key_exists(ltrim(CustomerSession::class, '\\'), $sharedInstances->getValue($objectManager))) {
+            $customerSession = $this->getObjectIfInitialized(CustomerSession::class);
+            if ($customerSession === null) {
                 return [];
             }
-            $customerSession = $objectManager->get(CustomerSession::class);
 
             if ($customerSession->isLoggedIn()) {
                 return [
@@ -111,7 +163,7 @@ class SentryInteraction
     /**
      * Attempt to add the user context to the exception.
      */
-    public function addUserContext()
+    public function addUserContext(): void
     {
         $userId = null;
         $userType = null;
@@ -120,12 +172,23 @@ class SentryInteraction
         \Magento\Framework\Profiler::start('SENTRY::add_user_context');
 
         try {
-            $userId = $this->userContext->getUserId();
-            if ($userId) {
-                $userType = $this->userContext->getUserType();
+            $ip = $this->remoteAddress->getRemoteAddress();
+            if ($ip) {
+                configureScope(function (Scope $scope) use ($ip) {
+                    $scope->setUser([
+                        'ip_address' => $ip,
+                    ]);
+                });
             }
 
-            if ($this->canGetUserData() && count($userData = $this->getSessionUserData())) {
+            if ($this->canGetUserContext()) {
+                $userId = $this->getUserContext()->getUserId();
+                if ($userId) {
+                    $userType = $this->getUserContext()->getUserType();
+                }
+            }
+
+            if (count($userData = $this->getSessionUserData())) {
                 $userId = $userData['id'] ?? $userId;
                 $userType = $userData['user_type'] ?? $userType;
                 unset($userData['user_type']);
@@ -164,10 +227,19 @@ class SentryInteraction
      *
      * @return void
      */
-    public function captureException(\Throwable $ex)
+    public function captureException(\Throwable $ex): void
     {
-        ob_start();
-        captureException($ex);
-        ob_end_clean();
+        try {
+            if (!$this->sentryHelper->shouldCaptureException($ex)) {
+                return;
+            }
+
+            $this->addUserContext();
+
+            ob_start();
+            captureException($ex);
+            ob_end_clean();
+        } catch (Throwable) { // phpcs:ignore Magento2.CodeAnalysis.EmptyBlock.DetectedCatch
+        }
     }
 }
