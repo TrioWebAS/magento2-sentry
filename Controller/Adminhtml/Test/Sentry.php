@@ -3,9 +3,9 @@
 namespace JustBetter\Sentry\Controller\Adminhtml\Test;
 
 use JustBetter\Sentry\Helper\Data;
+use JustBetter\Sentry\Plugin\MonologPlugin;
 use Magento\Backend\App\Action;
 use Magento\Backend\App\Action\Context;
-use Magento\Framework\Logger\Monolog;
 use Magento\Framework\Serialize\Serializer\Json;
 use Magento\Framework\View\Result\PageFactory;
 use Psr\Log\LoggerInterface;
@@ -27,7 +27,7 @@ class Sentry extends Action
      * @param Json            $jsonSerializer
      * @param LoggerInterface $logger
      * @param Data            $helperSentry
-     * @param Monolog         $monolog
+     * @param MonologPlugin   $monologPlugin
      */
     public function __construct(
         Context $context,
@@ -35,7 +35,7 @@ class Sentry extends Action
         private Json $jsonSerializer,
         protected LoggerInterface $logger,
         private Data $helperSentry,
-        private Monolog $monolog
+        private MonologPlugin $monologPlugin
     ) {
         parent::__construct($context);
     }
@@ -54,7 +54,7 @@ class Sentry extends Action
         if ($activeWithReason['active']) {
             try {
                 if ($this->helperSentry->isPhpTrackingEnabled()) {
-                    $this->monolog->addRecord(\Monolog\Logger::ALERT, 'TEST message from Magento 2', []);
+                    $this->monologPlugin->addRecord(\Monolog\Logger::ALERT, 'TEST message from Magento 2', []);
                     $result['status'] = true;
                     $result['content'] = __('Check sentry.io which should hold an alert');
                 } else {

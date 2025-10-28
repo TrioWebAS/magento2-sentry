@@ -2,53 +2,56 @@
 
 namespace JustBetter\Sentry\Plugin;
 
-use JustBetter\Sentry\Logger\Handler\Sentry;
-use Monolog\Logger;
+use JustBetter\Sentry\Helper\Data;
+use JustBetter\Sentry\Model\SentryLog;
+use Magento\Framework\App\DeploymentConfig;
+use Magento\Framework\Logger\Monolog;
+use Monolog\DateTimeImmutable;
 
-class MonologPlugin
+class MonologPlugin extends Monolog
 {
     /**
-     * @param Sentry $sentryHandler The sentry handler we will add to all Monolog loggers.
+     * @psalm-param array<callable(array): array> $processors
+     *
+     * @param string                              $name             The logging channel, a simple descriptive name that is attached to all log records
+     * @param Data                                $sentryHelper
+     * @param SentryLog                           $sentryLog
+     * @param DeploymentConfig                    $deploymentConfig
+     * @param \Monolog\Handler\HandlerInterface[] $handlers         Optional stack of handlers, the first one in the array is called first, etc.
+     * @param callable[]                          $processors       Optional array of processors
      */
     public function __construct(
-        protected Sentry $sentryHandler,
+        $name,
+        protected Data $sentryHelper,
+        protected SentryLog $sentryLog,
+        protected DeploymentConfig $deploymentConfig,
+        array $handlers = [],
+        array $processors = []
     ) {
+        parent::__construct($name, $handlers, $processors);
     }
 
     /**
-     * Add the Sentry handler to the Monolog logger if it does not already exist.
+     * Adds a log record to Sentry.
      *
-     * @param Logger $subject
-     * @param array  $handlers
+     * @param int               $level    The logging level
+     * @param string            $message  The log message
+     * @param array             $context  The log context
+     * @param DateTimeImmutable $datetime Datetime of log
      *
-     * @return array
+     * @return bool Whether the record has been processed
      */
-    public function beforeSetHandlers(
-        Logger $subject,
-        array $handlers
-    ): array {
-        if (!$this->containsHandler($handlers)) {
-            array_unshift($handlers, $this->sentryHandler);
+    public function addRecord(
+        int $level,
+        string $message,
+        array $context = [],
+        DateTimeImmutable $datetime = null
+    ): bool {
+        if ($this->deploymentConfig->isAvailable() && $this->sentryHelper->isActive()) {
+            $this->sentryLog->send($message, $level, $context);
         }
 
-        return [$handlers];
-    }
-
-    /**
-     * Check if the Sentry handler is already in the list of handlers.
-     *
-     * @param array $handlers
-     *
-     * @return bool
-     */
-    public function containsHandler(array $handlers): bool
-    {
-        foreach ($handlers as $handler) {
-            if ($handler instanceof Sentry) {
-                return true;
-            }
-        }
-
-        return false;
+        // @phpstan-ignore argument.type
+        return parent::addRecord($level, $message, $context, $datetime);
     }
 }

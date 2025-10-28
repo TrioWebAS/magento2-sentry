@@ -1,43 +1,4 @@
 # Changelog
-## [4.4.0] - 2025-07-14
-### Fixed
-    * Catch zend db adapter errors when database is missing (https://github.com/justbetter/magento2-sentry/pull/193)
-    * Fix logrocket key type
-### Added
-    * Add the ability to select job codes using regex (https://github.com/justbetter/magento2-sentry/pull/197)
-    * Added support for [spotlight](https://spotlightjs.com/) (https://github.com/justbetter/magento2-sentry/pull/195)
-## [4.3.0] - 2025-06-24
-### Fixed
-    * Catch The default website isnt defined when getting store (https://github.com/justbetter/magento2-sentry/pull/188)
-### Added
-    * Add sentry logger by hooking into monolog setHandlers (https://github.com/justbetter/magento2-sentry/pull/184)
-    * Added support for cron check-ins (https://github.com/justbetter/magento2-sentry/pull/182)
-## [4.2.0] - 2025-06-11
-### Added
-    * Add performance sampling by (https://github.com/justbetter/magento2-sentry/pull/178) thanks to https://github.com/indykoning, https://github.com/barryvdh and https://github.com/rommelfreddy
-    * Automatically pass all supported sentry config (https://github.com/justbetter/magento2-sentry/pull/177)
-## [4.1.0] - 2025-06-04
-### Added
-    * Clean up the Magento stacktrace before sending it to Sentry (https://github.com/justbetter/magento2-sentry/pull/171)
-    * Pass config also relevant to sentry (https://github.com/justbetter/magento2-sentry/pull/172)
-### Fixed 
-    * Gather ip from Magento instead of server variable (https://github.com/justbetter/magento2-sentry/pull/174)
-## [4.0.1] - 2025-05-06
-### Fixed 
-    * Load customerSession in SentryLog via proxy (Fixing https://github.com/justbetter/magento2-sentry/issues/160) (https://github.com/justbetter/magento2-sentry/pull/169) thanks to https://github.com/brosenberger
-## [4.0.0] - 2025-04-23
-### Added 
-    * Moved sentry logging to a monolog handler (https://github.com/justbetter/magento2-sentry/pull/165)
-    * Added support for Magento 2.4.8
-    * Added support for Monolog V3
-### Changed
-    * Dynamically add sentry and logrocket domains to CSP whitelist (https://github.com/justbetter/magento2-sentry/pull/156) thanks to https://github.com/brosenberger
-    * Use secureRenderer for including sentry frontend js (https://github.com/justbetter/magento2-sentry/pull/157) thanks to https://github.com/brosenberger
-## [3.9.0] - 2025-01-31
-### Added 
-    * Raised PHPStan level to 5 (https://github.com/justbetter/magento2-sentry/pull/149)
-    * Added user context to logging and errors when possible (https://github.com/justbetter/magento2-sentry/pull/133 & https://github.com/justbetter/magento2-sentry/pull/152)
-    * Allow overriding some config per store (https://github.com/justbetter/magento2-sentry/pull/155) thanks to https://github.com/bruno-blackbird
 ## [3.8.0] - 2024-08-09
 ### Added 
     * Added option to exclude default-integrations (https://github.com/justbetter/magento2-sentry/pull/146) thanks to https://github.com/rommelfreddy

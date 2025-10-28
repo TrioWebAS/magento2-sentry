@@ -8,12 +8,10 @@ use Magento\Framework\App\Area;
 use Magento\Framework\App\State;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\SessionException;
-use Sentry\EventHint;
-use Sentry\ExceptionMechanism;
-use Sentry\Stacktrace;
+use Magento\Framework\Logger\Monolog;
 use Sentry\State\Scope as SentryScope;
 
-class SentryLog
+class SentryLog extends Monolog
 {
     /**
      * @var array
@@ -23,17 +21,24 @@ class SentryLog
     /**
      * SentryLog constructor.
      *
+     * @param string            $name
      * @param Data              $data
      * @param Session           $customerSession
      * @param State             $appState
      * @param SentryInteraction $sentryInteraction
+     * @param array             $handlers
+     * @param array             $processors
      */
     public function __construct(
+        $name,
         protected Data $data,
         protected Session $customerSession,
         private State $appState,
         private SentryInteraction $sentryInteraction,
+        array $handlers = [],
+        array $processors = []
     ) {
+        parent::__construct($name, $handlers, $processors);
     }
 
     /**
@@ -71,11 +76,7 @@ class SentryLog
         if ($message instanceof \Throwable) {
             $lastEventId = \Sentry\captureException($message);
         } else {
-            $lastEventId = \Sentry\captureMessage(
-                $message,
-                \Sentry\Severity::fromError($logLevel),
-                $this->monologContextToSentryHint($context)
-            );
+            $lastEventId = \Sentry\captureMessage($message, \Sentry\Severity::fromError($logLevel));
         }
 
         /// when using JS SDK you can use this for custom error page printing
@@ -86,29 +87,6 @@ class SentryLog
         } catch (SessionException $e) {
             return;
         }
-    }
-
-    /**
-     * Turn the monolog context into a format Sentrys EventHint can deal with.
-     *
-     * @param array $context
-     *
-     * @return EventHint|null
-     */
-    public function monologContextToSentryHint(array $context): ?EventHint
-    {
-        return EventHint::fromArray(
-            [
-                'exception'  => ($context['exception'] ?? null) instanceof \Throwable ? $context['exception'] : null,
-                'mechanism'  => ($context['mechanism'] ?? null) instanceof ExceptionMechanism ? $context['mechanism'] : null,
-                'stacktrace' => ($context['stacktrace'] ?? null) instanceof Stacktrace ? $context['stacktrace'] : null,
-                'extra'      => array_filter(
-                    $context,
-                    fn ($key) => !in_array($key, ['exception', 'mechanism', 'stacktrace']),
-                    ARRAY_FILTER_USE_KEY
-                ) ?: [],
-            ]
-        );
     }
 
     /**
@@ -137,9 +115,9 @@ class SentryLog
 
         $scope->setTag('mage_mode', $this->data->getAppState());
         $scope->setTag('version', $this->data->getMagentoVersion());
-        $scope->setTag('website_id', (string) $store?->getWebsiteId());
-        $scope->setTag('store_id', (string) $store?->getId());
-        $scope->setTag('store_code', (string) $store?->getCode());
+        $scope->setTag('website_id', $store ? $store->getWebsiteId() : null);
+        $scope->setTag('store_id', $store ? $store->getStoreId() : null);
+        $scope->setTag('store_code', $store ? $store->getCode() : null);
 
         if (false === empty($customTags)) {
             foreach ($customTags as $tag => $value) {

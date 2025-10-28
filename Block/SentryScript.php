@@ -39,19 +39,15 @@ class SentryScript extends Template
      */
     public function canUseScriptTag($blockName)
     {
-        if (!$this->dataHelper->isActive() || !$this->dataHelper->showScriptTagInThisBlock($blockName)) {
+        if (!$this->dataHelper->isActive()) {
             return false;
         }
 
-        if ($this->useScriptTag()) {
+        if ($this->dataHelper->useScriptTag() && $this->dataHelper->showScriptTagInThisBlock($blockName)) {
             return true;
         }
 
-        if ($this->useSessionReplay()) {
-            return true;
-        }
-
-        if ($this->isSpotlightEnabled()) {
+        if ($this->dataHelper->useSessionReplay()) {
             return true;
         }
 
@@ -65,7 +61,7 @@ class SentryScript extends Template
      */
     public function getDSN()
     {
-        return (string) $this->dataHelper->getDSN();
+        return $this->dataHelper->getDSN();
     }
 
     /**
@@ -96,14 +92,6 @@ class SentryScript extends Template
     public function getEnvironment()
     {
         return $this->dataHelper->getEnvironment();
-    }
-
-    /**
-     * Whether to enable sentry js tracking.
-     */
-    public function useScriptTag(): bool
-    {
-        return $this->dataHelper->useScriptTag();
     }
 
     /**
@@ -212,14 +200,6 @@ class SentryScript extends Template
     public function isTracingEnabled(): bool
     {
         return $this->dataHelper->isTracingEnabled();
-    }
-
-    /**
-     * Whether spotlight is enabled.
-     */
-    public function isSpotlightEnabled(): bool
-    {
-        return $this->dataHelper->isSpotlightEnabled();
     }
 
     /**
