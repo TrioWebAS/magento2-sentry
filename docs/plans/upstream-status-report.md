@@ -8,14 +8,13 @@ We're going to update this module by fething upstream updates.
 This project is mainly about gathering info and documenting the current state of the module. We will NOT alter any code or github history yet.
 
 ## Sidenotes
-- Our local `master` branch has successfully pulled from upstream
-- We have lately added 2 important commits to `remotes/origin/update/2.4.8`. These are vital to keep the module running on php 8.4. These changes are also applied to `upstream/master`
-- One of our devs recently made a failed attempt to pull `master`, but reverted it right after. We're not sure if there are traces of this in the git history.
+- Our local `upstream` branch is a checkout of latest `upstream/master`
+- `origin/production` is the default branch, and the one that runs on our magento production instance. We aim to update this branch.
 
-## Why we cannot simply merge `master` into `production`
+## Why we cannot simply merge `upstream` into `production`
 
-- We needed to prematurely merge more than 3 PRs that where pending on upstream/main in 2024. 
-  - We therefore kept our own `master` as a copy of the upstream master. 
+- We needed to prematurely merge more than 3 PRs that where pending on upstream/master in 2024. 
+  - We therefore kept our own `upstream` as a copy of the `upstream/master`. It has since been updated 
   - We merged these PRs into `develop` and made the project run smoothly.
   - Finally, we pushed all of it to `production`.
   - We're unsure about whether or not these pending PRs where ever accepted and worked into the latest upstream/master of 2025.
