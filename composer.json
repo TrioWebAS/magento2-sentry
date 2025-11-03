@@ -1,5 +1,6 @@
 {
-  "name": "justbetter/magento2-sentry",
+  "name": "triowebas/magento2-sentry",
+  "version": "4.4.0",
   "description": "Magento 2 Logger for Sentry",
   "keywords": [
     "PHP",
