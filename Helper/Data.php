@@ -80,7 +80,7 @@ class Data extends AbstractHelper
         ...self::NATIVE_SENTRY_CONFIG_KEYS,
         'logrocket_key'                       => ['type' => 'string'],
         'log_level'                           => ['type' => 'int'],
-        'logger_log_level'                    => ['type' => 'int', 'default' => \Monolog\Logger::WARNING],
+        'logger_log_level'                    => ['type' => 'int', 'default' => 300 /* \Monolog\Level::Warning */],
         'errorexception_reporting'            => ['type' => 'int'], /* @deprecated by @see: error_types https://docs.sentry.io/platforms/php/configuration/options/#error_types */
         'mage_mode_development'               => ['type' => 'bool'],
         'js_sdk_version'                      => ['type' => 'string'],
@@ -94,6 +94,7 @@ class Data extends AbstractHelper
         'clean_stacktrace'                    => ['type' => 'bool'],
         'cron_monitoring_enabled'             => ['type' => 'bool'],
         'track_crons'                         => ['type' => 'array'],
+        'enable_csp_report_url'               => ['type' => 'bool'],
     ];
 
     /**
@@ -612,6 +613,16 @@ class Data extends AbstractHelper
     public function getIgnoreExceptions(): array
     {
         return $this->collectModuleConfig()['ignore_exceptions'] ?? [];
+    }
+
+    /**
+     * Whether the report-uri directive in the CSP is enabled.
+     *
+     * @return bool
+     */
+    public function isEnableCspReportUrl(): bool
+    {
+        return $this->collectModuleConfig()['enable_csp_report_url'] ?? false;
     }
 
     /**

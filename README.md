@@ -41,7 +41,7 @@ This module uses the [Magento Deployment Configuration](https://devdocs.magento.
     'dsn' => 'example.com',
     'logrocket_key' => 'example/example',
     'environment' => null,
-    'log_level' => \Monolog\Logger::WARNING,
+    'log_level' => \Monolog\Level::Warning,
     'error_types' => E_ALL,
     'ignore_exceptions' => [],
     'mage_mode_development' => false,
@@ -54,7 +54,8 @@ This module uses the [Magento Deployment Configuration](https://devdocs.magento.
     'performance_tracking_enabled' => true,
     'performance_tracking_excluded_areas' => [\Magento\Framework\App::AREA_ADMINHTML, \Magento\Framework\App::AREA_CRONTAB],
     'profiles_sample_rate' => 0.5,
-    'ignore_js_errors' => []
+    'ignore_js_errors' => [],
+    'enable_csp_report_url' => true,
 ]
 ```
 
@@ -73,7 +74,7 @@ Next to that there are some configuration options under Stores > Configuration >
 | `sample_rate`               | `1.0` | Configures the sample rate for error events, in the range of 0.0 to 1.0. |
 | `ignore_exceptions`         | `[]` | If the class being thrown matches any in this list, do not send it to Sentry, e.g., `[\Magento\Framework\Exception\NoSuchEntityException::class]` |
 | `error_types`               | `E_ALL` | If the Exception is an instance of [ErrorException](https://www.php.net/manual/en/class.errorexception.php), send the error to Sentry if it matches the error reporting. Uses the same syntax as [Error Reporting](https://www.php.net/manual/en/function.error-reporting.php), e.g., `E_ERROR` | E_WARNING`. |
-| `log_level`                 | `\Monolog\Logger::WARNING` | Specify from which logging level on Sentry should get the [messages](https://docs.sentry.io/platforms/php/usage/#capturing-messages). |
+| `log_level`                 | `\Monolog\Level::Warning` | Specify from which logging level on Sentry should get the [messages](https://docs.sentry.io/platforms/php/usage/#capturing-messages). |
 | `clean_stacktrace`          | `true` | Whether unnecessary files (like Interceptor.php, Proxy.php, and Factory.php) should be removed from the stacktrace. (They will not be removed if they threw the error.) |
 | `tracing_enabled`           | `false` | If set to true, tracing is enabled (bundle file is loaded automatically). |
 | `traces_sample_rate`        | `0.2` | If tracing is enabled, set the sample rate. A number between 0 and 1, controlling the percentage chance a given transaction will be sent to Sentry. |
@@ -82,7 +83,7 @@ Next to that there are some configuration options under Stores > Configuration >
 | `performance_tracking_enabled` | `false` | if performance tracking is enabled, a performance report gets generated for the request. |
 | `performance_tracking_excluded_areas` | `['adminhtml', 'crontab']` | if `performance_tracking_enabled` is enabled, we recommend to exclude the `adminhtml` & `crontab` area. |
 | `enable_logs`               | `false` | This option enables the [logging integration](https://sentry.io/product/logs/), which allows the SDK to capture logs and send them to Sentry. |
-| `logger_log_level`          | `\Monolog\Logger::NOTICE` | If the logging integration is enabled, specify from which logging level the logger should log |
+| `logger_log_level`          | `\Monolog\Level::Notice` | If the logging integration is enabled, specify from which logging level the logger should log |
 | `js_sdk_version`            | `\JustBetter\Sentry\Block\SentryScript::CURRENT_VERSION` | If set, loads the explicit version of the JavaScript SDK of Sentry. |
 | `ignore_js_errors`          | `[]` | Array of JavaScript error messages which should not be sent to Sentry. (See also `ignoreErrors` in [Sentry documentation](https://docs.sentry.io/clients/javascript/config/)) |
 | `disable_default_integrations` | `[]` | Provide a list of FQCN of default integrations you do not want to use. [List of default integrations](https://github.com/getsentry/sentry-php/tree/master/src/Integration).|
@@ -90,7 +91,7 @@ Next to that there are some configuration options under Stores > Configuration >
 | `track_crons` | `[]` | Cron handles of crons to track with cron monitoring, [Sentry only supports 6 check-ins per minute](https://docs.sentry.io/platforms/php/crons/#rate-limits) Magento does many more. |
 | `spotlight` | `false` | Enable [Spotlight](https://spotlightjs.com/) on the page |
 | `spotlight_url` | - | Override the [Sidecar url](https://spotlightjs.com/sidecar/) |         
-                   
+| `enable_csp_report_url` | `false` | If set to true, the report-uri will be automatically added based on the DSN. |
 
 ### Configuration for Adobe Cloud
 Since Adobe Cloud doesn't allow you to add manually add content to the `env.php` file, the configuration can be done
@@ -143,7 +144,7 @@ public function execute(\Magento\Framework\Event\Observer $observer)
 Example: https://github.com/justbetter/magento2-sentry-filter-events
 
 This same thing is the case for
-|                                |                                                                                     | 
+|                                |                                                                                     |
 |--------------------------------|-------------------------------------------------------------------------------------|
 | sentry_before_send             | https://docs.sentry.io/platforms/php/configuration/options/#before_send             |
 | sentry_before_send_transaction | https://docs.sentry.io/platforms/php/configuration/options/#before_send_transaction |
@@ -164,7 +165,7 @@ Please see [CONTRIBUTING](.github/CONTRIBUTING.md) for details.
 
 Most importantly:
 - When making a PR please add a description what you've added, and if relevant why.
-- To save time on codestyle feedback, please run 
+- To save time on codestyle feedback, please run
     - `composer install`
     - `composer run codestyle`
     - `composer run analyse`
